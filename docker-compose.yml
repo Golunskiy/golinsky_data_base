@@ -1,0 +1,57 @@
+version: '3.7.4'
+services:
+  app:
+    build:
+      context: ./app/
+      dockerfile: Dockerfile.app
+    depends_on:
+      - db
+    networks:
+      - net
+    environment:
+      PYTHONUNBUFFERED: 1
+
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_DB: "DB_docker"
+      POSTGRES_HOST: "db"
+    ports:
+      - '5432:5432'
+    networks:
+      - net
+
+  migrate:
+    build:
+      context: ./app/
+      dockerfile: Dockerfile.app
+    depends_on:
+      - db
+    environment:
+      PYTHONUNBUFFERED: 1
+      FLASK_APP: "app.py"
+      FLASK_ENV: "development"
+    command: "flask db upgrade"
+    networks:
+      - net
+
+  web:
+    build:
+      context: ./app/
+      dockerfile: Dockerfile.web
+    depends_on:
+      - db
+    environment:
+      PYTHONUNBUFFERED: 1
+      FLASK_APP: "web.py"
+      FLASK_ENV: "development"
+    ports:
+      - '5000:5000'
+    networks:
+      - net
+
+networks:
+  net:
